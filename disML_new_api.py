@@ -75,8 +75,7 @@ def get_feed_dict(session,train_data_batch_tensor):
                 ids_val: indices,
                 weights_val: weight_list}
 
-def get_observe_loss_variable():
-        return self.observe_loss
+
 
 
 
