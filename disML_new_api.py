@@ -1,6 +1,9 @@
 import tensorflow as tf
 import numpy as np
+import logging
 
+logging.basicConfig(level=logging.INFO)
+logging.getLogger().setLevel(logging.INFO)
 
 def parse_line_for_batch_for_libsvm(line):
     value = line.split(" ")
@@ -83,7 +86,7 @@ num_features = 29890095
 data_dir = "/research/d3/zmwu/model/svm_debug/data"
 
 # trainset_files = map(lambda x: data_dir+"/"+ x, tf.gfile.ListDirectory(data_dir))
-trainset_files = ["/research/d3/zmwu/model/svm_debug/data/kddb"]
+trainset_files = ["/research/d3/zmwu/model/svm_debug/kddb.t"]
 train_filename_queue = tf.train.string_input_producer(trainset_files)
 train_reader = tf.TextLineReader()
 key_tensor, line_tensor = train_reader.read(train_filename_queue)
@@ -110,11 +113,14 @@ train_op = tf.train.AdamOptimizer(learning_rate=0.00008).minimize(SVM_loss)
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
+logging.info("start training here")
+
+
 for i in range(10):
-    with open('/research/d3/zmwu/model/svm_debug/info.log', 'w') as f:
-        print('EPOCH', i,file=f)
-        fd = get_feed_dict(sess,train_data_batch_tensor)
-        print(sess.run(train_op, feed_dict=fd),file=f)
-    # if i % 10 == 0:
-    #     print("Loss: ", SVM_loss)
-        print('DONE WITH EPOCH',file=f)
+    logging.info("start Epoch %d" % i)
+    fd = get_feed_dict(sess,train_data_batch_tensor)
+    logging.info("feed dict generate finish.")
+    logging.info(sess.run(train_op, feed_dict=fd))
+# if i % 10 == 0:
+#     print("Loss: ", SVM_loss)
+    logging.info("Epoch Done")
