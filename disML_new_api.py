@@ -1,18 +1,24 @@
 import tensorflow as tf
 import numpy as np
+import logging
+from tensorflow.python import debug as tf_debug
 
+logging.basicConfig(level=logging.INFO)
+logging.getLogger().setLevel(logging.INFO)
 
 def parse_line_for_batch_for_libsvm(line):
-    value = line.split(" ")
-    if value[0] == "+1":
+    value = line.split(b' ')
+    # logging.info(value)
+    if value[0] == b'1':
         one_hot_label = [1, 0]
     else:
         one_hot_label = [0, 1]
+    # logging.info(one_hot_label)
     label = value[0]
     indices = []
     values = []
     for item in value[1:]:
-        [index, value] = item.split(':')
+        [index, value] = item.split(b':')
         # if index start with 1, index = int(index)-1
         # else index=int(index)
         index = int(index) - 1
@@ -82,7 +88,6 @@ def get_feed_dict(session,train_data_batch_tensor):
 num_features = 29890095
 data_dir = "/research/d3/zmwu/model/svm_debug/data"
 
-# trainset_files = map(lambda x: data_dir+"/"+ x, tf.gfile.ListDirectory(data_dir))
 trainset_files = ["/research/d3/zmwu/model/svm_debug/data/kddb"]
 train_filename_queue = tf.train.string_input_producer(trainset_files)
 train_reader = tf.TextLineReader()
@@ -107,14 +112,25 @@ with tf.variable_scope('loss'):
 
 train_op = tf.train.AdamOptimizer(learning_rate=0.00008).minimize(SVM_loss)
 
-sess = tf.Session()
-sess.run(tf.global_variables_initializer())
+logging.info("start training here")
 
-for i in range(10):
-    with open('/research/d3/zmwu/model/svm_debug/info.log', 'w') as f:
-        print('EPOCH', i,file=f)
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    coordinator = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(sess=sess, coord=coordinator)
+
+
+    for i in range(4000):
+        logging.info("run data prepare for epoch %d" % i)
         fd = get_feed_dict(sess,train_data_batch_tensor)
-        print(sess.run(train_op, feed_dict=fd),file=f)
+        logging.info("feed dict generate finish.")
+
+        logging.info("start Epoch %d" % i)
+        
+        
+        _,loss = sess.run([train_op,SVM_loss], feed_dict=fd)
+        logging.info(loss)
+
     # if i % 10 == 0:
     #     print("Loss: ", SVM_loss)
-        print('DONE WITH EPOCH',file=f)
+        logging.info("Epoch Done")
